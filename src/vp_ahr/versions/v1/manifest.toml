@@ -1,0 +1,54 @@
+schema = 1
+pathway = "ahr"
+version = "v1"
+released = "2026-09-06"
+reason = "first release: binary XGBoost on Morgan, MACCS and RDKit descriptors over the Tox21 aryl-hydrocarbon-receptor screen"
+
+[signature]
+version = 1
+inputs = ["smiles"]
+
+[[signature.outputs]]
+name = "ahr_agonist"
+dtype = "float32"
+range = [0.0, 1.0]
+semantics = "P(activates the aryl hydrocarbon receptor signalling pathway in the Tox21 qHTS reporter). The readout is transcriptional output."
+missing = "NaN when RDKit cannot parse the input SMILES"
+
+[[signature.outputs]]
+name = "ahr_cytotox"
+dtype = "float32"
+range = [0.0, 1.0]
+semantics = "P(reduces viability in the counter-screen over the same library). A compound scoring high on both readouts activated the reporter in a cell that was also dying"
+missing = "NaN when RDKit cannot parse the input SMILES"
+
+[dataset]
+name = "Tox21 aryl hydrocarbon receptor qHTS"
+source = "PubChem BioAssay AID 743085 (qHTS assay to identify small molecule that activate the aryl hydrocarbon receptor (AhR) signaling pathway) and AID 743086 (qHTS assay to identify small molecule that activate the aryl hydrocarbon receptor (AhR) signaling pathway - cell viability counter screen), rows called Active or Inactive, one row per compound labelled by majority call across its assay records"
+url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/assay/aid/743085/concise/CSV"
+retrieved = "2026-09-06"
+licence = "public-domain"
+redistributable = true
+path = "data/ahr_tox21.parquet"
+labels = ["label", "cytotox"]
+sha256 = "a51cfd84d52a7c2d8e711b1fc18ea7bd8fed902fe1673b144b063d30c7924ce5"
+n_rows = 6944
+base_rate = 0.083813
+fetch = "python -m vp_ahr.data fetch --verify"
+
+[model]
+family = "xgboost-binary"
+features = "combo3"
+fit = "one model per output, each on every compound its endpoint labels minus a 10% scaffold carve used for early stopping"
+weights = "weights.joblib"
+sha256 = "a0b0da88f1580ebe6ee6eda7077564127ac8e7b8c8159bda5942d13da42305ed"
+
+[protocol]
+id = "scaffold-shuffle-5seed@1"
+provider = "vp-core"
+core_version = "1.2.0"
+
+[provenance]
+python = "3.11.11"
+rdkit = "2026.03.5"
+xgboost = "3.2.0"
